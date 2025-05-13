@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "stdio_stm.h": "c",
+        "main.h": "c"
+    }
+}
