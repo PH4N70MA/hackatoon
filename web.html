@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MQTT Web Dashboard</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+  <h2>MQTT Web Dashboard</h2>
+  <p>Ultima valoare senzor: <span id="sensor-value">N/A</span></p>
+  <button onclick="sendCommand('ON')">Trimite ON</button>
+  <button onclick="sendCommand('OFF')">Trimite OFF</button>
+
+  <script>
+    const options = {
+      clean: true,
+      connectTimeout: 4000,
+      clientId: 'webclient_' + Math.random().toString(16).substr(2, 8),
+      username: 'smartmeteo',
+      password: 'Smartmeteo1',
+    };
+
+    const connectUrl = 'wss://b1b35e1141d346ae810baa94f55377e1.s1.eu.hivemq.cloud:8884/mqtt';
+
+    const client = mqtt.connect(connectUrl, options);
+
+    client.on('connect', () => {
+      console.log('✅ Conectat la broker');
+
+      // Ascultă topicul publicat de ESP32
+      client.subscribe('esp32/pulalumini', (err) => {
+        if (!err) {
+          console.log('📡 Subscribed la esp32/pulalumini');
+        }
+      });
+    });
+
+    client.on('message', (topic, message) => {
+      if (topic === 'esp32/pulalumini') {
+        document.getElementById('sensor-value').textContent = message.toString();
+      }
+    });
+
+    function sendCommand(cmd) {
+      client.publish('esp32/receive', cmd);
+      console.log('📤 Trimis:', cmd);
+    }
+
+    client.on('error', (err) => {
+      console.error('❌ Eroare MQTT:', err);
+    });
+  </script>
+</body>
+</html>
