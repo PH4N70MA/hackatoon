@@ -16,37 +16,56 @@
     const mqttBrokerUrl = 'wss://b1b35e1141d346ae810baa94f55377e1.s1.eu.hivemq.cloud:8884/mqtt';
     const client = mqtt.connect(mqttBrokerUrl, options);
 
-    client.on('connect', () => {
-        console.log('✅ Conectat la MQTT broker HiveMQ');
-
-        // Subscribe la topicul pe care ESP32 trimite date
-        client.subscribe('esp32/send', (err) => {
-            if (!err) {
-                console.log('📡 Subscribed la esp32/send');
-            } else {
-                console.error('❌ Subscribe error:', err);
-            }
-        });
-    });
-
-    client.on('message', (topic, message) => {
-        if (topic === 'esp32/send') {
-            const value = parseFloat(message.toString());
-            console.log('📥 Valoare senzor primită:', value);
-
-            // Afișează în dashboard valoarea ca "Air Temperature"
+  client.on('message', (topic, message) => {
+    const value = parseFloat(message.toString());
+    const now = new Date();
+    
+    switch(topic) {
+        case 'esp32/air_temp':
+            console.log('📥 Valoare temperatură aer primită:', value);
             document.getElementById('air-temp').textContent = value.toFixed(1);
-
-            // Actualizează și ora ultimei primiri
-            const now = new Date();
             document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+            break;
+            
+        case 'esp32/air_humidity':
+            console.log('📥 Valoare umiditate aer primită:', value);
+            document.getElementById('air-humidity').textContent = value.toFixed(1);
+            document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+            break;
+            
+        case 'esp32/soil_humidity':
+            console.log('📥 Valoare umiditate sol primită:', value);
+            document.getElementById('soil-humidity').textContent = value.toFixed(1);
+            document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+            break;
+            
+        case 'esp32/precipitation':
+            console.log('📥 Valoare precipitații primită:', value);
+            document.getElementById('precipitation').textContent = value.toFixed(1);
+            document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+            break;
+            
+        default:
+            console.log('📥 Mesaj primit pe topic necunoscut:', topic, message.toString());
+    }
+});
+
+// La conectarea clientului MQTT:
+client.on('connect', () => {
+    console.log('✅ Conectat la broker MQTT');
+    client.subscribe([
+        'esp32/air_temp',
+        'esp32/air_humidity',
+        'esp32/soil_humidity',
+        'esp32/precipitation'
+    ], (err) => {
+        if (!err) {
+            console.log('✔ Subscribed to all topics');
+        } else {
+            console.error('❌ Eroare la subscribe:', err);
         }
     });
-
-    client.on('error', (err) => {
-        console.error('❌ Eroare MQTT:', err);
-    });
-    
+});
     function sendCommand(cmd) {
       client.publish('esp32/zone1', cmd);
       console.log('📤 Trimis:', cmd);
@@ -409,7 +428,7 @@
             console.log('Refreshing data...');
             
             // Simulate data refresh with random values
-            document.getElementById('air-temp').textContent = (20 + Math.random() * 10).toFixed(1);
+            document.getElementById('air-temp').textContent = document.getElementById('air-temp').textContent;
             document.getElementById('air-humidity').textContent = Math.floor(50 + Math.random() * 30);
             document.getElementById('soil-humidity').textContent = Math.floor(30 + Math.random() * 30);
             document.getElementById('precipitation').textContent = (Math.random() * 2).toFixed(1);
@@ -420,22 +439,22 @@
         });
 
         // Function to simulate real-time data updates (for demo purposes)
-        function simulateDataUpdates() {
-            // Small random changes to current values
-            const airTemp = document.getElementById('air-temp');
-            const airHumidity = document.getElementById('air-humidity');
-            const soilHumidity = document.getElementById('soil-humidity');
-            const precipitation = document.getElementById('precipitation');
+        // function simulateDataUpdates() {
+        //     // Small random changes to current values
+        //     const airTemp = document.getElementById('air-temp');
+        //     const airHumidity = document.getElementById('air-humidity');
+        //     const soilHumidity = document.getElementById('soil-humidity');
+        //     const precipitation = document.getElementById('precipitation');
             
-            airTemp.textContent = (parseFloat(airTemp.textContent) + (Math.random() - 0.5) * 0.2).toFixed(1);
-            airHumidity.textContent = Math.max(0, Math.min(100, parseInt(airHumidity.textContent) + Math.floor((Math.random() - 0.5) * 2)));
-            soilHumidity.textContent = Math.max(0, Math.min(100, parseInt(soilHumidity.textContent) + Math.floor((Math.random() - 0.5) * 2)));
-            precipitation.textContent = Math.max(0, (parseFloat(precipitation.textContent) + (Math.random() - 0.5) * 0.1).toFixed(1));
+        //     airTemp.textContent = (parseFloat(airTemp.textContent) + (Math.random() - 0.5) * 0.2).toFixed(1);
+        //     airHumidity.textContent = Math.max(0, Math.min(100, parseInt(airHumidity.textContent) + Math.floor((Math.random() - 0.5) * 2)));
+        //     soilHumidity.textContent = Math.max(0, Math.min(100, parseInt(soilHumidity.textContent) + Math.floor((Math.random() - 0.5) * 2)));
+        //     precipitation.textContent = Math.max(0, (parseFloat(precipitation.textContent) + (Math.random() - 0.5) * 0.1).toFixed(1));
             
-            // Update last updated time
-            const now = new Date();
-            document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
-        }
+        //     // Update last updated time
+        //     const now = new Date();
+        //     document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+        // }
 
         // Update data every 10 seconds for demo purposes
         setInterval(simulateDataUpdates, 10000);

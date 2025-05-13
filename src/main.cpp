@@ -29,11 +29,11 @@ PubSubClient mqttClient(wifiClient);
 // Variables for timing
 long previous_time = 0;
 
-// Simulated sensor values (în loc de senzori reali)
-float airTemp = 20.0;
-float airHumidity = 50.0;
-float soilHumidity = 30.0;
-float precipitation = 0.0;
+// Pin definitions for sensors (modify according to your setup)
+const int airTempPin = 34;    // Analog pin for air temperature sensor
+const int airHumidityPin = 35; // Analog pin for air humidity sensor
+const int soilHumidityPin = 32; // Analog pin for soil humidity sensor
+const int precipitationPin = 33; // Analog pin for precipitation sensor
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   String message;
@@ -75,6 +75,40 @@ void reconnect() {
   }
 }
 
+// Function to read sensor values
+float readAirTemperature() {
+  // Implement your actual sensor reading logic here
+  // Example for analog sensor:
+  int rawValue = analogRead(airTempPin);
+  // Convert raw value to temperature (adjust formula according to your sensor)
+  float temperature = (rawValue * 0.48828125) - 50.0; // Example conversion
+  return temperature;
+}
+
+float readAirHumidity() {
+  // Implement your actual sensor reading logic here
+  int rawValue = analogRead(airHumidityPin);
+  // Convert raw value to humidity percentage (adjust formula)
+  float humidity = (rawValue * 100.0) / 4095.0; // Example conversion
+  return humidity;
+}
+
+float readSoilHumidity() {
+  // Implement your actual sensor reading logic here
+  int rawValue = analogRead(soilHumidityPin);
+  // Convert raw value to soil humidity percentage (adjust formula)
+  float humidity = (rawValue * 100.0) / 4095.0; // Example conversion
+  return humidity;
+}
+
+float readPrecipitation() {
+  // Implement your actual sensor reading logic here
+  int rawValue = analogRead(precipitationPin);
+  // Convert raw value to precipitation (adjust formula)
+  float precipitation = rawValue / 100.0; // Example conversion
+  return precipitation;
+}
+
 void setup() {
   Serial.begin(115200);
   
@@ -91,6 +125,12 @@ void setup() {
   setupMQTT();
 
   pinMode(ZONE1_PIN, OUTPUT);
+  
+  // Initialize sensor pins
+  pinMode(airTempPin, INPUT);
+  pinMode(airHumidityPin, INPUT);
+  pinMode(soilHumidityPin, INPUT);
+  pinMode(precipitationPin, INPUT);
 }
 
 void loop() {
@@ -100,22 +140,16 @@ void loop() {
   mqttClient.loop();
 
   long now = millis();
-  if (now - previous_time > 2000) { // Trimite date la fiecare 2 secunde
+  if (now - previous_time > 2000) { // Send data every 2 seconds
     previous_time = now;
 
-    // Simulare valori senzori (înlocuiește cu citiri reale de la senzori)
-    airTemp += random(-5, 5)/10.0;
-    airHumidity += random(-5, 5)/10.0;
-    soilHumidity += random(-5, 5)/10.0;
-    precipitation = random(0, 10)/10.0;
+    // Read actual sensor values
+    float airTemp = readAirTemperature();
+    float airHumidity = readAirHumidity();
+    float soilHumidity = readSoilHumidity();
+    float precipitation = readPrecipitation();
 
-    // Asigură-te că valorile rămân în intervale reale
-    airTemp = constrain(airTemp, -10, 40);
-    airHumidity = constrain(airHumidity, 0, 100);
-    soilHumidity = constrain(soilHumidity, 0, 100);
-    precipitation = constrain(precipitation, 0, 10);
-
-    // Trimite valorile pe topicurile corespunzătoare
+    // Send values to corresponding topics
     mqttClient.publish(topic_air_temp, String(airTemp).c_str());
     mqttClient.publish(topic_air_humidity, String(airHumidity).c_str());
     mqttClient.publish(topic_soil_humidity, String(soilHumidity).c_str());
