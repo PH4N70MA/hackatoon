@@ -3,6 +3,7 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 
+#define ZONE1_PIN 23
 // Wi-Fi credentials
 const char* ssid = "Pixel_8898";
 const char* password = "123456789";
@@ -14,8 +15,8 @@ const char* mqtt_username = "smartmeteo";
 const char* mqtt_password = "Smartmeteo1";
 
 // MQTT topics
-const char* topic_pulalumini = "esp32/pulalumini";
-const char* topic_subscribe = "esp32/receive"; // Topic to receive messages
+const char* topic_send = "esp32/send";
+const char* topic_subscribe = "esp32/zone1"; // Topic to receive messages
 
 // IR Sensor details
 const int ir_sensor_pin = 34; // GPIO pin connected to the IR sensor
@@ -29,23 +30,20 @@ long previous_time = 0;
 
 // Callback function to handle incoming messages
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("]: ");
   String message;
   for (int i = 0; i < length; i++) {
     message += (char)payload[i];
   }
+
+  Serial.print("Message [");
+  Serial.print(topic);
+  Serial.print("]: ");
   Serial.println(message);
 
-  // Handle the message, e.g., turn on/off an LED based on message
-  if (message == "ON") {
-    Serial.println("Turning on LED");
-    // Do something, like turning on an LED
-  } else if (message == "OFF") {
-    Serial.println("Turning off LED");
-    // Do something, like turning off an LED
+  if (String(topic) == "esp32/zone1") {
+    digitalWrite(ZONE1_PIN, message == "ON" ? HIGH : LOW);
   }
+  // Adaugă și pentru zonele 2 și 3...
 }
 
 void setupMQTT() {
@@ -100,7 +98,7 @@ void loop() {
   mqttClient.loop();
 
   long now = millis();
-  if (now - previous_time > 1000) { // Publish every 10 seconds
+  if (now - previous_time > 2000) { // Publish every 10 seconds
     previous_time = now;
 
     // Read the IR sensor value
@@ -111,8 +109,8 @@ void loop() {
     String ir_value_str = String(distance);
     
     // Publish the sensor value to the MQTT topic
-    Serial.print("IR Sensor Value: ");
+    Serial.print("hello world ");
     Serial.println(ir_value_str);
-    mqttClient.publish(topic_pulalumini, ir_value_str.c_str());
+    mqttClient.publish(topic_send, ir_value_str.c_str());
   }
 }
