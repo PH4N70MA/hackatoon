@@ -45,8 +45,8 @@ ADC_HandleTypeDef hadc1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint16_t adcValue1 = 0;
-uint16_t adcValue2 = 0;
+uint32_t adcValue1 = 0;
+uint32_t adcValue2 = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,27 +60,7 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void readADC(void)
-{
-  // Reconfigure the ADC channel to IN0
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-  adcValue1 = HAL_ADC_GetValue(&hadc1); // Read data from IN0
 
-  // Reconfigure the ADC channel to IN1
-  ADC_ChannelConfTypeDef sConfig = {0};
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-
-  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-  adcValue2 = HAL_ADC_GetValue(&hadc1); // Read data from IN1
-
-  // Reconfigure the ADC channel back to IN0 for the next loop iteration
-  sConfig.Channel = ADC_CHANNEL_0;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-}
 /* USER CODE END 0 */
 
 /**
@@ -128,8 +108,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // readADC(); // Read ADC values
-    
+    readADC(&hadc1, &adcValue1, &adcValue2); // Read ADC values
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

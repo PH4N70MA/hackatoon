@@ -36,6 +36,7 @@ extern "C" {
 #include <string.h>
 #include "config.h"
 #include <stdio_stm.h>
+#include "adc_read.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
