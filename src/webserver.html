@@ -429,10 +429,10 @@ client.on('connect', () => {
             
             // Simulate data refresh with random values
             document.getElementById('air-temp').textContent = document.getElementById('air-temp').textContent;
-            document.getElementById('air-humidity').textContent = Math.floor(50 + Math.random() * 30);
-            document.getElementById('soil-humidity').textContent = Math.floor(30 + Math.random() * 30);
-            document.getElementById('precipitation').textContent = (Math.random() * 2).toFixed(1);
-            
+            document.getElementById('air-humidity').textContent = document.getElementById('air-humidity').textContent;
+            document.getElementById('soil-humidity').textContent = document.getElementById('soil-humidity').textContent;
+            document.getElementById('precipitation').textContent = document.getElementById('precipitation').textContent;
+
             // Update last updated time
             const now = new Date();
             document.getElementById('last-updated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
