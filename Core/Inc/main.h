@@ -63,10 +63,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define BUILD_IN_LED_Pin GPIO_PIN_13
 #define BUILD_IN_LED_GPIO_Port GPIOC
-#define SOLID_MOISTURE_Pin GPIO_PIN_0
-#define SOLID_MOISTURE_GPIO_Port GPIOA
-#define WATER_LVL_Pin GPIO_PIN_1
-#define WATER_LVL_GPIO_Port GPIOA
 #define SPEAKER_Pin GPIO_PIN_9
 #define SPEAKER_GPIO_Port GPIOB
 
