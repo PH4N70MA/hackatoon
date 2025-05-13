@@ -3,8 +3,6 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 
-#define ZONE1_PIN 23
-
 // Wi-Fi credentials
 const char* ssid = "Pixel_8898";
 const char* password = "123456789";
@@ -28,12 +26,7 @@ PubSubClient mqttClient(wifiClient);
 
 // Variables for timing
 long previous_time = 0;
-
-// Pin definitions for sensors (modify according to your setup)
-const int airTempPin = 34;    // Analog pin for air temperature sensor
-const int airHumidityPin = 35; // Analog pin for air humidity sensor
-const int soilHumidityPin = 32; // Analog pin for soil humidity sensor
-const int precipitationPin = 33; // Analog pin for precipitation sensor
+String uartBuffer = "";
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   String message;
@@ -46,8 +39,18 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("]: ");
   Serial.println(message);
 
-  if (String(topic) == "esp32/zone1") {
-    digitalWrite(ZONE1_PIN, message == "ON" ? HIGH : LOW);
+  // Handle actuator commands
+  if (String(topic) == topic_subscribe) {
+    if (message == "SW1") {
+      Serial.println("SW1");
+      // Add code to turn on the actuator
+    } else if (message == "SW2") {
+      Serial.println("SW2");
+      // Add code to turn off the actuator
+    } else if (message == "SW3") {
+      Serial.println("SW3");
+      // Add code to toggle the actuator
+    }
   }
 }
 
@@ -65,6 +68,7 @@ void reconnect() {
     
     if (mqttClient.connect(clientId.c_str(), mqtt_username, mqtt_password)) {
       Serial.println("Connected to MQTT Broker.");
+      // Subscribe to control topics
       mqttClient.subscribe(topic_subscribe);
     } else {
       Serial.print("Failed, rc=");
@@ -75,42 +79,39 @@ void reconnect() {
   }
 }
 
-// Function to read sensor values
-float readAirTemperature() {
-  // Implement your actual sensor reading logic here
-  // Example for analog sensor:
-  int rawValue = analogRead(airTempPin);
-  // Convert raw value to temperature (adjust formula according to your sensor)
-  float temperature = (rawValue * 0.48828125) - 50.0; // Example conversion
-  return temperature;
-}
+void parseSensorData(String data) {
+  // Expected format: "TEMP:25.5 HUM:60.5 SOIL:45.0 RAIN:1.2"
+  int tempStart = data.indexOf("TEMP:") + 5;
+  int tempEnd = data.indexOf(" ", tempStart);
+  float airTemp = data.substring(tempStart, tempEnd).toFloat();
+  
+  int humStart = data.indexOf("HUM:") + 4;
+  int humEnd = data.indexOf(" ", humStart);
+  float airHumidity = data.substring(humStart, humEnd).toFloat();
+  
+  int soilStart = data.indexOf("SOIL:") + 5;
+  int soilEnd = data.indexOf(" ", soilStart);
+  float soilHumidity = data.substring(soilStart, soilEnd).toFloat();
+  
+  int rainStart = data.indexOf("RAIN:") + 5;
+  float precipitation = data.substring(rainStart).toFloat();
 
-float readAirHumidity() {
-  // Implement your actual sensor reading logic here
-  int rawValue = analogRead(airHumidityPin);
-  // Convert raw value to humidity percentage (adjust formula)
-  float humidity = (rawValue * 100.0) / 4095.0; // Example conversion
-  return humidity;
-}
+  // Publish sensor data to MQTT
+  mqttClient.publish(topic_air_temp, String(airTemp).c_str());
+  mqttClient.publish(topic_air_humidity, String(airHumidity).c_str());
+  mqttClient.publish(topic_soil_humidity, String(soilHumidity).c_str());
+  mqttClient.publish(topic_precipitation, String(precipitation).c_str());
 
-float readSoilHumidity() {
-  // Implement your actual sensor reading logic here
-  int rawValue = analogRead(soilHumidityPin);
-  // Convert raw value to soil humidity percentage (adjust formula)
-  float humidity = (rawValue * 100.0) / 4095.0; // Example conversion
-  return humidity;
-}
-
-float readPrecipitation() {
-  // Implement your actual sensor reading logic here
-  int rawValue = analogRead(precipitationPin);
-  // Convert raw value to precipitation (adjust formula)
-  float precipitation = rawValue / 100.0; // Example conversion
-  return precipitation;
+  Serial.println("Date primite de la STM32:");
+  Serial.print("Temperatura aer: "); Serial.println(airTemp);
+  Serial.print("Umiditate aer: "); Serial.println(airHumidity);
+  Serial.print("Umiditate sol: "); Serial.println(soilHumidity);
+  Serial.print("Precipitatii: "); Serial.println(precipitation);
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200);     // Serial for debugging
+  Serial1.begin(115200, SERIAL_8N1, 16, 17);  // UART to STM32 (RX=16, TX=17)
   
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -121,16 +122,7 @@ void setup() {
   Serial.println("Connected to Wi-Fi");
 
   wifiClient.setInsecure(); // Use this only for testing
-  
   setupMQTT();
-
-  pinMode(ZONE1_PIN, OUTPUT);
-  
-  // Initialize sensor pins
-  pinMode(airTempPin, INPUT);
-  pinMode(airHumidityPin, INPUT);
-  pinMode(soilHumidityPin, INPUT);
-  pinMode(precipitationPin, INPUT);
 }
 
 void loop() {
@@ -139,26 +131,33 @@ void loop() {
   }
   mqttClient.loop();
 
+  // Request and receive data from STM32 every 2 seconds
   long now = millis();
-  if (now - previous_time > 2000) { // Send data every 2 seconds
+  if (now - previous_time > 2000) {
     previous_time = now;
+    
+    // Send request to STM32
+    Serial1.println("hesoyam");
+    Serial.println("Trimis request către STM32: hesoyam");
+  }
 
-    // Read actual sensor values
-    float airTemp = readAirTemperature();
-    float airHumidity = readAirHumidity();
-    float soilHumidity = readSoilHumidity();
-    float precipitation = readPrecipitation();
-
-    // Send values to corresponding topics
-    mqttClient.publish(topic_air_temp, String(airTemp).c_str());
-    mqttClient.publish(topic_air_humidity, String(airHumidity).c_str());
-    mqttClient.publish(topic_soil_humidity, String(soilHumidity).c_str());
-    mqttClient.publish(topic_precipitation, String(precipitation).c_str());
-
-    Serial.println("Date trimise:");
-    Serial.print("Temperatura aer: "); Serial.println(airTemp);
-    Serial.print("Umiditate aer: "); Serial.println(airHumidity);
-    Serial.print("Umiditate sol: "); Serial.println(soilHumidity);
-    Serial.print("Precipitatii: "); Serial.println(precipitation);
+  // Read data from STM32
+  while (Serial1.available()) {
+    char c = Serial1.read();
+    if (c == '\n') {
+      if (uartBuffer.length() > 0) {
+        Serial.print("Primit de la STM32: ");
+        Serial.println(uartBuffer);
+        
+        // Check if this is sensor data response
+        if (uartBuffer.indexOf("TEMP:") != -1) {
+          parseSensorData(uartBuffer);
+        }
+        
+        uartBuffer = "";
+      }
+    } else if (c != '\r') {
+      uartBuffer += c;
+    }
   }
 }
