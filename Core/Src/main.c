@@ -42,6 +42,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+TIM_HandleTypeDef htim1;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -60,13 +62,34 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void readRowADC()
+{
+    // Reconfigure the ADC channel to IN0
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    adcValue1 = HAL_ADC_GetValue(&hadc1); // Read data from IN0
 
+    // Reconfigure the ADC channel to IN1
+    ADC_ChannelConfTypeDef sConfig = {0};
+    sConfig.Channel = ADC_CHANNEL_1;
+    sConfig.Rank = 1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    adcValue2 = HAL_ADC_GetValue(&hadc1); // Read data from IN1
+
+    // Reconfigure the ADC channel back to IN0 for the next loop iteration
+    sConfig.Channel = ADC_CHANNEL_0;
+    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+}
 /* USER CODE END 0 */
 
 /**
@@ -77,7 +100,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -103,6 +126,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   // Initializate the RX_DATA buffer
   HAL_UART_Receive_IT(&huart2, RX_DATA, RX_DATA_SIZE);
@@ -114,10 +138,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    readRowADC(&hadc1, &adcValue1, &adcValue2); // Read ADC values
-    // Convert ADC values to soil moisture and rainwater
-    soilSensorValue = convertSoilMoisture(adcValue1);
-    rainSensorValue = convertRainWater(adcValue2);
+    
     // printf("TEMP: %d HUM:%d SOIL:%d RAIN:%d\n", temp, humidity, soilSensorValue, rainSensorValue);
     // HAL_Delay(1000); // Delay for 1 second
     // HAL_Delay(1000); // Delay for 1 second
@@ -236,6 +257,52 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 71;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65535;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -289,7 +356,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(BUILD_IN_LED_GPIO_Port, BUILD_IN_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(SPEAKER_GPIO_Port, SPEAKER_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : BUILD_IN_LED_Pin */
   GPIO_InitStruct.Pin = BUILD_IN_LED_Pin;
@@ -298,12 +365,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BUILD_IN_LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SPEAKER_Pin */
-  GPIO_InitStruct.Pin = SPEAKER_Pin;
+  /*Configure GPIO pin : DHT11_Pin */
+  GPIO_InitStruct.Pin = DHT11_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(SPEAKER_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(DHT11_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -332,14 +399,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
   scanf("%10s", command);
 
-  printf("%s\n", command);
-
-  if (strcmp(command, "hesoyam") == 0)
+  if (!strcmp(command, "hesoyam"))
   {
-    printf("TEMP: %d HUM:%d SOIL:%lu RAIN:%lu\n", temp, humidity, soilSensorValue, rainSensorValue);
+      readRowADC(); // Read ADC values
+      // Convert ADC values to soil moisture and rainwater
+      soilSensorValue = convertSoilMoisture(adcValue1);
+      rainSensorValue = convertRainWater(adcValue2);
+      printf("TEMP: %d HUM:%d SOIL:%d RAIN:%d\n", temp, humidity, soilSensorValue, rainSensorValue);
   }
 
   HAL_UART_Receive_IT(&huart2, RX_DATA, RX_DATA_SIZE);
+  return;
 }
 
 /* USER CODE END 4 */

@@ -64,8 +64,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define BUILD_IN_LED_Pin GPIO_PIN_13
 #define BUILD_IN_LED_GPIO_Port GPIOC
-#define SPEAKER_Pin GPIO_PIN_9
-#define SPEAKER_GPIO_Port GPIOB
+#define DHT11_Pin GPIO_PIN_9
+#define DHT11_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

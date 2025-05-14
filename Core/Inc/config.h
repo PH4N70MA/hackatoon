@@ -3,7 +3,7 @@
 
 // Configuration settings for the project
 
-#define RX_DATA_SIZE 1
+#define RX_DATA_SIZE 10
 #define DEBOUNDE_DELAY 100
 
 char buf[100];
