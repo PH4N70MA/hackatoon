@@ -27,18 +27,16 @@ void MQTTHandler::callback(char* topic, byte* payload, unsigned int length) {
         message += (char)payload[i];
     }
     
-    Serial.print("Message [");
-    Serial.print(topic);
-    Serial.print("]: ");
+    
     Serial.println(message);
 
     if (String(topic) == topic_subscribe) {
         if (message == "SW1") {
-            Serial.println("SW1 command received");
+            Serial.println("SW1");
         } else if (message == "SW2") {
-            Serial.println("SW2 command received");
+            Serial.println("SW2");
         } else if (message == "SW3") {
-            Serial.println("SW3 command received");
+            Serial.println("SW3");
         }
     }
 }

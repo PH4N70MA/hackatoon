@@ -1,37 +1,22 @@
 #include "UARTCommunicator.h"
-#include "config.h"
 
-extern const int uart_rx_pin;
-extern const int uart_tx_pin;
-extern const long uart_baudrate;
-
-UARTCommunicator::UARTCommunicator() {}
-
-void UARTCommunicator::begin() {
-    Serial1.begin(uart_baudrate, SERIAL_8N1, uart_rx_pin, uart_tx_pin);
+void UARTCommunicator::begin(unsigned long baud) {
+    Serial.begin(baud); // UART2 pe ESP32. Poți modifica dacă folosești alți pini.
 }
 
-void UARTCommunicator::requestData() {
-    Serial1.println("hesoyam");
-    Serial.println("Request sent to STM32: hesoyam");
+void UARTCommunicator::send(const String& message) {
+    Serial.print(message);
 }
 
 bool UARTCommunicator::dataAvailable() {
-    return Serial1.available();
+    return Serial.available() > 0;
 }
 
 String UARTCommunicator::readData() {
-    while (Serial1.available()) {
-        char c = Serial1.read();
-        if (c == '\n') {
-            if (buffer.length() > 0) {
-                String result = buffer;
-                buffer = "";
-                return result;
-            }
-        } else if (c != '\r') {
-            buffer += c;
-        }
+    String data = "";
+    while (Serial.available()) {
+        char c = Serial.read();
+        data += c;
     }
-    return "";
+    return data;
 }
