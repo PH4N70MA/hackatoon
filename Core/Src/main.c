@@ -403,9 +403,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   
   // printf("Enter command: ");
   char command[10] = {0};
-
   scanf("%10s", command);
-
+  
+  // printf("command: %10s", command);
   if (!strcmp(command, "hesoyam"))
   {
       readRowADC(); // Read ADC values
