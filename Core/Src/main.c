@@ -47,6 +47,12 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 uint32_t adcValue1 = 0;
 uint32_t adcValue2 = 0;
+
+int temp = 22;
+uint8_t humidity = 50;
+
+uint8_t soilSensorValue = 0;
+uint8_t rainSensorValue = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,8 +114,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    readADC(&hadc1, &adcValue1, &adcValue2); // Read ADC values
-
+    readRowADC(&hadc1, &adcValue1, &adcValue2); // Read ADC values
+    // Convert ADC values to soil moisture and rainwater
+    soilSensorValue = convertSoilMoisture(adcValue1);
+    rainSensorValue = convertRainWater(adcValue2);
+    // printf("TEMP: %d HUM:%d SOIL:%d RAIN:%d\n", temp, humidity, soilSensorValue, rainSensorValue);
+    // HAL_Delay(1000); // Delay for 1 second
+    // HAL_Delay(1000); // Delay for 1 second
 
     /* USER CODE END WHILE */
 
@@ -308,20 +319,25 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   // Prevent unused argument(s) compilation warning
   UNUSED(huart);
-  if (RX_DATA[0] != '.')
-  {
-    printf("Request declined!\n ");
-    HAL_UART_Receive_IT(&huart2, RX_DATA, RX_DATA_SIZE);
-    return;
-  }
-  printf("Request received!\n ");
+  // if (RX_DATA[0] != '.')
+  // {
+  //   printf("Request declined!\n ");
+  //   HAL_UART_Receive_IT(&huart2, RX_DATA, RX_DATA_SIZE);
+  //   return;
+  // }
+  // printf("Request received!\n ");
   
-  printf("Enter command: ");
+  // printf("Enter command: ");
   char command[10] = {0};
 
   scanf("%10s", command);
 
   printf("%s\n", command);
+
+  if (strcmp(command, "hesoyam") == 0)
+  {
+    printf("TEMP: %d HUM:%d SOIL:%lu RAIN:%lu\n", temp, humidity, soilSensorValue, rainSensorValue);
+  }
 
   HAL_UART_Receive_IT(&huart2, RX_DATA, RX_DATA_SIZE);
 }
