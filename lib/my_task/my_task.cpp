@@ -46,7 +46,7 @@ void parsing(const char *command)
 {    
     if (!strcmp(command, "panzer"))
     {
-        Serial.print("TEAMP:");
+        Serial.print("TEMP:");
         Serial.print(temperature);
         Serial.print(" HUM:");
         Serial.print(humidity);
