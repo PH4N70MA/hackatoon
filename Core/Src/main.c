@@ -51,6 +51,7 @@ uint32_t adcValue1 = 0;
 uint32_t adcValue2 = 0;
 
 int temp = 22;
+uint8_t ttemp =22;
 uint8_t humidity = 50;
 
 uint8_t soilSensorValue = 0;
@@ -145,9 +146,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    
+    readRowADC(); // Read ADC values
+      // Convert ADC values to soil moisture and rainwater
+    soilSensorValue = convertSoilMoisture(adcValue1);
+    rainSensorValue = convertRainWater(adcValue2);
+    printf("SOIL:%d RAIN:%d\n", soilSensorValue, rainSensorValue);
+    printf("TEMP:%d HUM:%d\n", temp, humidity);
     // printf("TEMP: %d HUM:%d SOIL:%d RAIN:%d\n", temp, humidity, soilSensorValue, rainSensorValue);
-    // HAL_Delay(1000); // Delay for 1 second
+    HAL_Delay(1000); // Delay for 1 second
     // HAL_Delay(1000); // Delay for 1 second
 
     /* USER CODE END WHILE */
@@ -392,7 +398,7 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   // Prevent unused argument(s) compilation warning
-  UNUSED(huart);
+  // UNUSED(huart);
   // if (RX_DATA[0] != '.')
   // {
   //   printf("Request declined!\n ");
@@ -402,19 +408,25 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   // printf("Request received!\n ");
   
   // printf("Enter command: ");
-  char command[20] = {0};
-  scanf("%20s", command);
-  
-  // printf("command: %10s", command);
-  if (strchr(command, 'h') != NULL)
+  char command[RX_DATA_SIZE];
+  strncpy(command, (char *)RX_DATA, RX_DATA_SIZE - 1);
+  command[RX_DATA_SIZE - 1] = '\0'; // Ensure null termination
+
+  if (!strstr(command, "hesoyam"))
   {
       readRowADC(); // Read ADC values
       // Convert ADC values to soil moisture and rainwater
       soilSensorValue = convertSoilMoisture(adcValue1);
       rainSensorValue = convertRainWater(adcValue2);
-      printf("TEMP: %d HUM:%d SOIL:%d RAIN:%d\n", temp, humidity, soilSensorValue, rainSensorValue);
+      printf("SOIL:%d RAIN:%d\n", soilSensorValue, rainSensorValue);
   }
-
+  else if (!strstr(command, "panzeri"))
+  {
+      
+      printf("TEMP: %d HUM:%d\n", temp, humidity);
+  }
+  // Clear the RX_DATA buffer
+  memset(RX_DATA, 0, RX_DATA_SIZE);
   HAL_UART_Receive_IT(&huart2, RX_DATA, RX_DATA_SIZE);
   return;
 }

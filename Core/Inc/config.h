@@ -3,7 +3,7 @@
 
 // Configuration settings for the project
 
-#define RX_DATA_SIZE 2
+#define RX_DATA_SIZE 20
 #define DEBOUNDE_DELAY 100
 
 #define RELAY_1_PORT GPIOB

@@ -7,7 +7,7 @@ uint8_t convertSoilMoisture(uint32_t adcValue)
 
     // Assuming the sensorValue is in the range of 0-100
     // Convert the ADC value to a percentage
-    sensorValue = 100 - (adcValue * 100) / 2978;
+    sensorValue = 100 - (adcValue * 100) / 4095;
     return sensorValue;
 }
 
