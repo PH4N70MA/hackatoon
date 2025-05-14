@@ -37,6 +37,7 @@ extern "C" {
 #include "config.h"
 #include <stdio_stm.h>
 #include "adc_read.h"
+#include "actuator.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

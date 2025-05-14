@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "stdio_stm.h": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "actuator.h": "c"
     }
 }

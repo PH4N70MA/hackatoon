@@ -55,6 +55,10 @@ uint8_t humidity = 50;
 
 uint8_t soilSensorValue = 0;
 uint8_t rainSensorValue = 0;
+
+static RelayControl relay1;
+static RelayControl relay2;
+static RelayControl relay3;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -132,6 +136,9 @@ int main(void)
   HAL_UART_Receive_IT(&huart2, RX_DATA, RX_DATA_SIZE);
   // Initialize the retarget function
   RetargetInit(&huart2);
+  initRelayControl(&relay1, RELAY_1_PORT, RELAY_1_PIN);
+  initRelayControl(&relay2, RELAY_2_PORT, RELAY_2_PIN);
+  initRelayControl(&relay3, RELAY_3_PORT, RELAY_3_PIN);
   /* USER CODE END 2 */
 
   /* Infinite loop */
