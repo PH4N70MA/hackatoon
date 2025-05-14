@@ -44,7 +44,7 @@ void MyDutyForErverAndEverAgain(void)
 
 void parsing(const char *command)
 {    
-    if (!strncmp(command, "SOIL", 4))
+    if (!strncmp(command, "panzer", 7))
     {
         Serial.print("TEMP:");
         Serial.print(temperature);
