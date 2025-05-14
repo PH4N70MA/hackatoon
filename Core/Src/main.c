@@ -402,11 +402,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   // printf("Request received!\n ");
   
   // printf("Enter command: ");
-  char command[10] = {0};
-  scanf("%10s", command);
+  char command[20] = {0};
+  scanf("%20s", command);
   
   // printf("command: %10s", command);
-  if (!strcmp(command, "hesoyam"))
+  if (strchr(command, 'h') != NULL)
   {
       readRowADC(); // Read ADC values
       // Convert ADC values to soil moisture and rainwater
