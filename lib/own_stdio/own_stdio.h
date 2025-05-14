@@ -4,9 +4,6 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <config.h>
-#include "LiquidCrystal_I2C.h"
-
-
 
 
 void own_stdio_setup();
